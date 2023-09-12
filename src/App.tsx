@@ -2,13 +2,7 @@ import { Canvas } from "@react-three/fiber";
 import { KeyboardControls, KeyboardControlsEntry } from "@react-three/drei";
 import { useMemo } from "react";
 import Scene from "./scene/Scene";
-
-enum Controls {
-  forward = "forward",
-  back = "back",
-  left = "left",
-  right = "right",
-}
+import { Controls } from "./models";
 
 function App() {
   const map = useMemo<KeyboardControlsEntry<Controls>[]>(
