@@ -5,8 +5,9 @@ import {
   Stats,
 } from "@react-three/drei";
 import { useMemo } from "react";
-import Scene from "./scene/Scene";
+import Scene from "./scenes/Playground";
 import { Controls } from "./models";
+import Ui from "./Ui";
 
 function App() {
   const map = useMemo<KeyboardControlsEntry<Controls>[]>(
@@ -21,10 +22,23 @@ function App() {
 
   return (
     <KeyboardControls map={map}>
-      <Canvas shadows>
-        <Stats />
-        <Scene />
-      </Canvas>
+      <Ui>
+        <Canvas
+          shadows
+          gl={{ alpha: false }}
+          style={{
+            position: "relative",
+            width: "100%",
+            height: "100%",
+            overflow: "hidden",
+            pointerEvents: "auto",
+            touchAction: "none",
+          }}
+        >
+          <Stats />
+          <Scene />
+        </Canvas>
+      </Ui>
     </KeyboardControls>
   );
 }

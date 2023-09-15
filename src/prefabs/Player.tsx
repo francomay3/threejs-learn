@@ -5,7 +5,7 @@ import {
   PointerLockControls,
 } from "@react-three/drei";
 import { useRef } from "react";
-import { PublicApi, useBox } from "@react-three/cannon";
+import { PublicApi, useCompoundBody } from "@react-three/cannon";
 import { Controls } from "../models";
 import {
   PerspectiveCamera as PerspectiveCameraType,
@@ -17,17 +17,28 @@ import { useEffect, MutableRefObject } from "react";
 import Raycast from "../components/Raycast";
 
 const Player = () => {
-  const grounded = useRef(true);
+  const grounded = useRef(0);
   const directionVector = useRef(new Vector3());
   const position = useRef(new Vector3());
   const velocity = useRef(new Vector3());
 
-  const [collissionMesh, playerPhysicsApi] = useBox(() => ({
-    mass: 0.1,
-    fixedRotation: true,
-    material: {
-      friction: 0.05,
+  const [collissionMesh, playerPhysicsApi] = useCompoundBody(() => ({
+    mass: 80,
+    shapes: [
+      { args: [0.3], position: [0, 1.5, 0], type: "Sphere" },
+      { args: [0.3], position: [0, 0.9, 0], type: "Sphere" },
+      { args: [0.3], position: [0, 0.3, 0], type: "Sphere" },
+    ],
+    onCollide: (e) => {
+      if (e.contact.impactVelocity > 50) {
+        console.log("player died. or received damage.");
+      }
     },
+    onCollideBegin: () => (grounded.current += 1),
+    onCollideEnd: () => (grounded.current -= 1),
+    fixedRotation: true,
+    position: [0, 1, 0],
+    material: "slippery",
   })) as [MutableRefObject<Mesh>, PublicApi];
   const cameraRef = useRef<PerspectiveCameraType>(null);
   const forward = useKeyboardControls<Controls>((state) => state.forward)
@@ -78,7 +89,7 @@ const Player = () => {
     );
 
     // check if there is input and the player is grounded, else let physics handle movement
-    if (directionVector.current.length() !== 0 && grounded.current) {
+    if (directionVector.current.length() !== 0 && grounded.current > 0) {
       playerPhysicsApi.velocity.set(
         directionVector.current.x,
         velocity.current.y,
@@ -88,12 +99,12 @@ const Player = () => {
   });
 
   return (
-    <>
+    <group name="player">
       <PerspectiveCamera makeDefault ref={cameraRef} />
       <PointerLockControls />
 
       <mesh ref={collissionMesh} castShadow receiveShadow name="player">
-        <boxGeometry args={[1, 1, 1]} />
+        <capsuleGeometry args={[0.3, 1.3, 2, 10]} />
         <meshStandardMaterial color="blue" />
       </mesh>
       <Raycast
@@ -103,7 +114,7 @@ const Player = () => {
           console.log(e);
         }}
       />
-    </>
+    </group>
   );
 };
 
