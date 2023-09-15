@@ -70,8 +70,7 @@ const Player = () => {
     const y = 0;
     const z = (back - forward);
 
-    const direction = new Vector3(x, y, z).applyQuaternion(camera.quaternion).setY(0).normalize().multiplyScalar(speed);
-
+    const direction = new Vector3(x, y, z).applyQuaternion(camera.quaternion).setY(0).setLength(speed);
 
     // check if there is input and the player is grounded, else let physics handle movement
     if (direction.length() !== 0 && grounded.current > 0) {
