@@ -14,6 +14,7 @@ import {
   Euler,
 } from "three";
 import { useEffect, MutableRefObject } from "react";
+import Raycast from "../components/Raycast";
 
 const Player = () => {
   const grounded = useRef(true);
@@ -57,16 +58,9 @@ const Player = () => {
     });
   }, [playerPhysicsApi, cameraRef]);
 
-  useFrame(({ raycaster }) => {
+  useFrame(() => {
     const camera = cameraRef.current;
     if (!playerPhysicsApi || !camera) return;
-
-    // check if the player is on the ground
-    // TODO: get the objects to intersect with
-    // raycaster.ray.origin.copy(playerPosition.current);
-    // raycaster.ray.origin.y -= 1;
-    // const intersections = raycaster.intersectObjects([]);
-    // playerGrounded.current = intersections.length > 0;
 
     const cameraRotation = camera.rotation.y;
     // up and down given by the angle in x
@@ -95,10 +89,23 @@ const Player = () => {
 
   return (
     <>
+      <Raycast
+        from={[5, 0.1, 0.1]}
+        to={[5, 1.5, 0.1]}
+        onHit={(e) => {
+          console.log(e);
+        }}
+      />
       <PerspectiveCamera makeDefault ref={cameraRef} />
       <PointerLockControls />
 
-      <mesh key={10} ref={collissionMesh} castShadow receiveShadow>
+      <mesh
+        key={10}
+        ref={collissionMesh}
+        castShadow
+        receiveShadow
+        name="player"
+      >
         <boxGeometry args={[1, 1, 1]} />
         <meshStandardMaterial color="blue" />
       </mesh>

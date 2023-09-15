@@ -17,7 +17,7 @@ const Floor = (props: PlaneProps) => {
     ...props,
   })) as any;
   return (
-    <mesh ref={ref} receiveShadow>
+    <mesh ref={ref} receiveShadow name="floor">
       <planeGeometry args={[100, 100]} />
       <meshStandardMaterial color="lightblue" metalness={0.1} roughness={0.5} />
     </mesh>
@@ -27,7 +27,7 @@ const Floor = (props: PlaneProps) => {
 const Cube = (props: BoxProps) => {
   const [ref] = useBox(() => ({ mass: 1, ...props })) as any;
   return (
-    <mesh ref={ref} castShadow receiveShadow>
+    <mesh ref={ref} castShadow receiveShadow name="cube">
       <boxGeometry />
       <meshStandardMaterial color="red"></meshStandardMaterial>
     </mesh>
