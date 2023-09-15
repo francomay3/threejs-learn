@@ -1,26 +1,23 @@
-import { useFrame } from "@react-three/fiber";
+import { useFrame, useThree } from "@react-three/fiber";
 import {
   useKeyboardControls,
-  PerspectiveCamera,
   PointerLockControls,
 } from "@react-three/drei";
 import { useRef } from "react";
 import { PublicApi, useCompoundBody } from "@react-three/cannon";
 import { Controls } from "../models";
 import {
-  PerspectiveCamera as PerspectiveCameraType,
   Vector3,
   Mesh,
-  Euler,
 } from "three";
 import { useEffect, MutableRefObject } from "react";
-import Raycast from "../components/Raycast";
 
 const Player = () => {
   const grounded = useRef(0);
-  const directionVector = useRef(new Vector3());
   const position = useRef(new Vector3());
   const velocity = useRef(new Vector3());
+  const { camera } = useThree();
+
 
   const [collissionMesh, playerPhysicsApi] = useCompoundBody(() => ({
     mass: 80,
@@ -40,7 +37,6 @@ const Player = () => {
     position: [0, 1, 0],
     material: "slippery",
   })) as [MutableRefObject<Mesh>, PublicApi];
-  const cameraRef = useRef<PerspectiveCameraType>(null);
   const forward = useKeyboardControls<Controls>((state) => state.forward)
     ? 1
     : 0;
@@ -49,11 +45,8 @@ const Player = () => {
   const right = useKeyboardControls<Controls>((state) => state.right) ? 1 : 0;
 
   useEffect(() => {
-    const camera = cameraRef.current;
-    if (!playerPhysicsApi || !camera) return;
+    if (!playerPhysicsApi) return;
 
-    // the angle on the Y axis will be used to rotate the player, so to avoid possible distortions we need to measure it first.
-    camera.rotation.reorder("YXZ");
     playerPhysicsApi.position.subscribe((playerPosition) => {
       const x = playerPosition[0];
       const y = playerPosition[1];
@@ -67,53 +60,36 @@ const Player = () => {
       const z = pVelocity[2];
       velocity.current = new Vector3(x, y, z);
     });
-  }, [playerPhysicsApi, cameraRef]);
+  }, [playerPhysicsApi]);
 
-  useFrame(() => {
-    const camera = cameraRef.current;
+  useFrame((_props, delta) => {
     if (!playerPhysicsApi || !camera) return;
 
-    const cameraRotation = camera.rotation.y;
-    // up and down given by the angle in x
-    // left and right given by the angle in y
-    // point the player in the direction of the camera
-    playerPhysicsApi.rotation.set(0, cameraRotation, 0);
-
-    const speed = 10;
-    const x = (right - left) * speed;
+    const speed = 700 * delta;
+    const x = (right - left);
     const y = 0;
-    const z = (back - forward) * speed;
+    const z = (back - forward);
 
-    directionVector.current = new Vector3(x, y, z).applyEuler(
-      new Euler(0, cameraRotation, 0)
-    );
+    const direction = new Vector3(x, y, z).applyQuaternion(camera.quaternion).setY(0).normalize().multiplyScalar(speed);
+
 
     // check if there is input and the player is grounded, else let physics handle movement
-    if (directionVector.current.length() !== 0 && grounded.current > 0) {
+    if (direction.length() !== 0 && grounded.current > 0) {
       playerPhysicsApi.velocity.set(
-        directionVector.current.x,
+        direction.x,
         velocity.current.y,
-        directionVector.current.z
+        direction.z
       );
     }
   });
 
   return (
     <group name="player">
-      <PerspectiveCamera makeDefault ref={cameraRef} />
       <PointerLockControls />
-
       <mesh ref={collissionMesh} castShadow receiveShadow name="player">
         <capsuleGeometry args={[0.3, 1.3, 2, 10]} />
         <meshStandardMaterial color="blue" />
       </mesh>
-      <Raycast
-        from={[5, 0.1, 0.1]}
-        to={[5, 1.5, 0.1]}
-        onHit={(e) => {
-          console.log(e);
-        }}
-      />
     </group>
   );
 };
