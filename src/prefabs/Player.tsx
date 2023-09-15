@@ -77,11 +77,11 @@ const Player = () => {
       new Euler(0, cameraRotation, 0)
     );
 
-    // check if the vector is not 0,0,0
+    // check if there is input and the player is grounded, else let physics handle movement
     if (directionVector.current.length() !== 0 && grounded.current) {
       playerPhysicsApi.velocity.set(
         directionVector.current.x,
-        directionVector.current.y,
+        velocity.current.y,
         directionVector.current.z
       );
     }
@@ -89,6 +89,13 @@ const Player = () => {
 
   return (
     <>
+      <PerspectiveCamera makeDefault ref={cameraRef} />
+      <PointerLockControls />
+
+      <mesh ref={collissionMesh} castShadow receiveShadow name="player">
+        <boxGeometry args={[1, 1, 1]} />
+        <meshStandardMaterial color="blue" />
+      </mesh>
       <Raycast
         from={[5, 0.1, 0.1]}
         to={[5, 1.5, 0.1]}
@@ -96,19 +103,6 @@ const Player = () => {
           console.log(e);
         }}
       />
-      <PerspectiveCamera makeDefault ref={cameraRef} />
-      <PointerLockControls />
-
-      <mesh
-        key={10}
-        ref={collissionMesh}
-        castShadow
-        receiveShadow
-        name="player"
-      >
-        <boxGeometry args={[1, 1, 1]} />
-        <meshStandardMaterial color="blue" />
-      </mesh>
     </>
   );
 };

@@ -1,5 +1,9 @@
 import { Canvas } from "@react-three/fiber";
-import { KeyboardControls, KeyboardControlsEntry } from "@react-three/drei";
+import {
+  KeyboardControls,
+  KeyboardControlsEntry,
+  Stats,
+} from "@react-three/drei";
 import { useMemo } from "react";
 import Scene from "./scene/Scene";
 import { Controls } from "./models";
@@ -18,6 +22,7 @@ function App() {
   return (
     <KeyboardControls map={map}>
       <Canvas shadows>
+        <Stats />
         <Scene />
       </Canvas>
     </KeyboardControls>
