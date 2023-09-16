@@ -10,7 +10,7 @@ const Scene = () => {
       <Environment preset="city" background />
       <Player />
       <Floor />
-      <Cube position={[0, 3, -10]} mass={2} />
+      <Cube position={[0, 3, -10]} mass={200} />
     </Physics>
   );
 };
