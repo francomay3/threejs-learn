@@ -21,6 +21,7 @@ const useInput = () => {
   const back = useKeyboardControls<Controls>((state) => state.back) ? 1 : 0;
   const left = useKeyboardControls<Controls>((state) => state.left) ? 1 : 0;
   const right = useKeyboardControls<Controls>((state) => state.right) ? 1 : 0;
+  const jump = useKeyboardControls<Controls>((state) => state.jump);
   const [vector, setVector] = useState(new Vector3());
   const [hasInput, setHasInput] = useState(false);
 
@@ -39,6 +40,7 @@ const useInput = () => {
     back,
     left,
     right,
+    jump,
     hasInput,
     vector
   };
@@ -50,7 +52,8 @@ const Player = () => {
   const position = useRef(new Vector3());
   const velocity = useRef(new Vector3());
   const { camera } = useThree();
-  const { hasInput, vector } = useInput();
+  const { hasInput, vector, jump } = useInput();
+  const [isJumping, setIsJumping] = useState(false);
 
   const [collissionMesh, playerPhysicsApi] = useCompoundBody(() => ({
     mass: 80,
@@ -72,6 +75,13 @@ const Player = () => {
       friction: 0
     },
   })) as [MutableRefObject<Mesh>, PublicApi];
+
+  useEffect(() => {
+  
+    if (jump && grounded > 0) {
+      playerPhysicsApi.velocity.set(velocity.current.x, velocity.current.y+10, velocity.current.z);
+    }
+  }, [jump, playerPhysicsApi]);
 
   useEffect(() => {
     if (hasInput || !grounded){
