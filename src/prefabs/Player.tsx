@@ -79,14 +79,15 @@ const useJump = (
   jump: boolean,
   grounded: number,
   playerPhysicsApi: PublicApi | undefined,
-  velocity: MutableRefObject<Vector3>
+  velocity: MutableRefObject<Vector3>,
+  jumpForce: number
 ) => {
   useEffect(() => {
     if (!playerPhysicsApi) return;
     if (jump && grounded > 0) {
       playerPhysicsApi.velocity.set(
         velocity.current.x,
-        velocity.current.y + 10,
+        velocity.current.y + jumpForce,
         velocity.current.z
       );
     }
@@ -101,6 +102,7 @@ const Player = () => {
   const { camera } = useThree();
   const { hasInput, relativeMovementAngle, jump } = useInput();
   const speed = 1000;
+  const jumpForce = 5;
 
   const [collissionMesh, playerPhysicsApi] = useSphere(() => ({
     args: [sphereRadius],
@@ -112,14 +114,13 @@ const Player = () => {
     },
     onCollideBegin: () => setGrounded((grounded) => grounded + 1),
     onCollideEnd: () => setGrounded((grounded) => grounded - 1),
-    // fixedRotation: true,
     position: [0, 1, 0],
     material: {
       friction: 0.5,
     },
   })) as [MutableRefObject<Mesh>, PublicApi];
 
-  useJump(jump, grounded, playerPhysicsApi, velocity);
+  useJump(jump, grounded, playerPhysicsApi, velocity, jumpForce);
 
   useAttachCamera(playerPhysicsApi, camera, collissionMesh, position, velocity);
 
@@ -127,7 +128,6 @@ const Player = () => {
     if (!playerPhysicsApi || !camera) return;
 
     if (!hasInput) {
-      // fix rotation
       playerPhysicsApi.angularVelocity.set(0, 0, 0);
     }
 
