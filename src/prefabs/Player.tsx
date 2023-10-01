@@ -25,10 +25,10 @@ const useInput = () => {
   useEffect(() => {
     const z = left - right;
     const x = back - forward;
-    const angle = Math.atan2(x, z);
-    setRelativeMovementAngle(angle);
 
-    if (forward || back || left || right) {
+    if (x !== 0 || z !== 0) {
+      const angle = Math.atan2(x, z);
+      setRelativeMovementAngle(angle);
       setHasInput(true);
     } else {
       setRelativeMovementAngle(0);
