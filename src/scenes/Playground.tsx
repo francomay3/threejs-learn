@@ -8,9 +8,14 @@ const Scene = () => {
   return (
     <Physics>
       <Environment preset="city" background />
-      <Player />
+      <Player position={[0, 2, 0]} />
       <Floor />
-      <Cube position={[0, 3, -10]} mass={200} />
+      <Cube
+        position={[0, 3, -10]}
+        mass={200}
+        args={[1, 2, 1]}
+        material={{ friction: 0.01 }}
+      />
     </Physics>
   );
 };

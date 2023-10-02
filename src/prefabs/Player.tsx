@@ -6,7 +6,7 @@ import {
   GizmoViewport,
 } from "@react-three/drei";
 import { useRef } from "react";
-import { PublicApi, useSphere } from "@react-three/cannon";
+import { PublicApi, Triplet, useSphere } from "@react-three/cannon";
 import { Controls } from "../models";
 import { Vector3, Mesh } from "three";
 import { useEffect, MutableRefObject, useState } from "react";
@@ -50,12 +50,11 @@ const useInput = () => {
 const useAttachCamera = (
   playerPhysicsApi: PublicApi | undefined,
   camera: THREE.Camera | undefined,
-  collissionMesh: MutableRefObject<Mesh> | undefined,
   position: MutableRefObject<Vector3>,
   velocity: MutableRefObject<Vector3>
 ) => {
   useEffect(() => {
-    if (!playerPhysicsApi || !camera || !collissionMesh) return;
+    if (!playerPhysicsApi || !camera) return;
 
     camera.rotation.order = "YXZ";
 
@@ -94,8 +93,46 @@ const useJump = (
   }, [jump, playerPhysicsApi]);
 };
 
-const Player = () => {
-  const sphereRadius = 0.5;
+const useMovePlayer = (
+  playerPhysicsApi: PublicApi | undefined,
+  camera: THREE.Camera | undefined,
+  hasInput: boolean,
+  relativeMovementAngle: number,
+  speed: number
+) => {
+  useFrame((_state, delta) => {
+    if (!playerPhysicsApi || !camera) return;
+
+    if (!hasInput) {
+      playerPhysicsApi.angularVelocity.set(0, 0, 0);
+      return;
+    }
+
+    const angleYcameraDirection = camera.rotation.y;
+    const worldMovementAngle = relativeMovementAngle + angleYcameraDirection;
+    const deltaSpeed = speed * delta;
+
+    const x = Math.sin(worldMovementAngle) * deltaSpeed;
+    const z = Math.cos(worldMovementAngle) * deltaSpeed;
+
+    playerPhysicsApi.rotation.set(0, angleYcameraDirection, 0);
+    playerPhysicsApi.angularVelocity.set(x, 0, z);
+  });
+};
+
+const useCameraShake = (
+  hasInput: boolean,
+  camera: THREE.Camera | undefined
+) => {
+  useFrame((state) => {
+    if (!hasInput || !camera) return;
+    const t = state.clock.getElapsedTime();
+    camera.position.y += Math.sin(t * 10) * 0.02;
+  });
+};
+
+const Player = ({ position: startingPosition }: { position: Triplet }) => {
+  const playerWidth = 0.5;
   const [grounded, setGrounded] = useState(0);
   const position = useRef(new Vector3());
   const velocity = useRef(new Vector3());
@@ -103,10 +140,12 @@ const Player = () => {
   const { hasInput, relativeMovementAngle, jump } = useInput();
   const speed = 1000;
   const jumpForce = 5;
+  const playerMass = 80;
 
   const [collissionMesh, playerPhysicsApi] = useSphere(() => ({
-    args: [sphereRadius],
-    mass: 80,
+    mass: playerMass,
+    position: startingPosition,
+    args: [playerWidth / 2],
     onCollide: (e) => {
       if (e.contact.impactVelocity > 50) {
         console.log("player died. or received damage.");
@@ -114,35 +153,19 @@ const Player = () => {
     },
     onCollideBegin: () => setGrounded((grounded) => grounded + 1),
     onCollideEnd: () => setGrounded((grounded) => grounded - 1),
-    position: [0, 1, 0],
-    material: {
-      friction: 0.5,
-    },
+    material: "slippery",
   })) as [MutableRefObject<Mesh>, PublicApi];
 
   useJump(jump, grounded, playerPhysicsApi, velocity, jumpForce);
-
-  useAttachCamera(playerPhysicsApi, camera, collissionMesh, position, velocity);
-
-  useFrame((_props, delta) => {
-    if (!playerPhysicsApi || !camera) return;
-
-    if (!hasInput) {
-      playerPhysicsApi.angularVelocity.set(0, 0, 0);
-    }
-
-    if (hasInput) {
-      const angleYcameraDirection = camera.rotation.y;
-      const worldMovementAngle = relativeMovementAngle + angleYcameraDirection;
-      const deltaSpeed = speed * delta;
-
-      const x = Math.sin(worldMovementAngle) * deltaSpeed;
-      const z = Math.cos(worldMovementAngle) * deltaSpeed;
-
-      playerPhysicsApi.rotation.set(0, angleYcameraDirection, 0);
-      playerPhysicsApi.angularVelocity.set(x, 0, z);
-    }
-  });
+  useAttachCamera(playerPhysicsApi, camera, position, velocity);
+  useCameraShake(hasInput, camera);
+  useMovePlayer(
+    playerPhysicsApi,
+    camera,
+    hasInput,
+    relativeMovementAngle,
+    speed
+  );
 
   return (
     <group name="player">
@@ -154,7 +177,7 @@ const Player = () => {
       </GizmoHelper>
       <PointerLockControls />
       <mesh ref={collissionMesh} castShadow receiveShadow name="player">
-        <sphereGeometry args={[sphereRadius, 32, 32]} />
+        <sphereGeometry args={[playerWidth / 2, 32, 32]} />
         <meshStandardMaterial color="blue" />
       </mesh>
     </group>

@@ -1,9 +1,10 @@
 import { useSphere, PublicApi, SphereProps } from "@react-three/cannon";
 import { forwardRef, useImperativeHandle } from "react";
 
-const Sphere = forwardRef((props: SphereProps, ref) => {
+const Sphere = forwardRef(({ material = "Box", ...rest }: SphereProps, ref) => {
   const [physicsRef, api] = useSphere(() => ({
-    ...props,
+    material,
+    ...rest,
   })) as [any, PublicApi];
   useImperativeHandle(ref, () => ({ ...api } as PublicApi));
 

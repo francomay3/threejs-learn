@@ -1,12 +1,10 @@
 import { usePlane, PlaneProps } from "@react-three/cannon";
 
-const Floor = (props: PlaneProps) => {
+const Floor = ({ material = "Ground", ...rest }: PlaneProps) => {
   const [ref] = usePlane(() => ({
     rotation: [-Math.PI / 2, 0, 0],
-    material: {
-      friction: 0.5,
-    },
-    ...props,
+    material,
+    ...rest,
   })) as any;
   return (
     <mesh ref={ref} receiveShadow name="floor">
